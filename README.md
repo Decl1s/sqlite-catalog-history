@@ -93,8 +93,9 @@ P-0001,Чай,Напитки,25000
 
 ```python
 import sqlite3
+from contextlib import closing
 
-with sqlite3.connect("workspace/catalog.sqlite3") as db:
+with closing(sqlite3.connect("workspace/catalog.sqlite3")) as db:
     print(db.execute("SELECT product_id, price_cents, valid_from, valid_to "
                      "FROM dim_product ORDER BY product_id, valid_from").fetchall())
 ```

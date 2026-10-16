@@ -1,4 +1,5 @@
 import csv
+from contextlib import closing
 import json
 import os
 import sqlite3
@@ -38,7 +39,7 @@ class HistoryTests(unittest.TestCase):
         return path
 
     def state(self):
-        with sqlite3.connect(self.db) as connection:
+        with closing(sqlite3.connect(self.db)) as connection, connection:
             return {table: connection.execute("SELECT * FROM " + table + " ORDER BY 1").fetchall()
                     for table in ("batches", "dim_product")}
 
@@ -168,7 +169,7 @@ class HistoryTests(unittest.TestCase):
 
     def test_foreign_database_is_not_modified(self):
         self.write("2026-01-01", [product()])
-        with sqlite3.connect(self.db) as connection:
+        with closing(sqlite3.connect(self.db)) as connection, connection:
             connection.execute("CREATE TABLE important(value)")
             connection.execute("INSERT INTO important VALUES ('keep')")
         before = self.db.read_bytes()
@@ -200,7 +201,7 @@ class HistoryTests(unittest.TestCase):
     def test_sql_unique_open_and_interval_constraints(self):
         self.write("2026-01-01", [product()])
         load(self.input, self.db)
-        with sqlite3.connect(self.db) as connection:
+        with closing(sqlite3.connect(self.db)) as connection, connection:
             connection.execute("INSERT INTO batches VALUES ('2026-01-02', ?, 1)", ("a" * 64,))
             with self.assertRaises(sqlite3.IntegrityError):
                 connection.execute("INSERT INTO dim_product(product_id,name,category,price_cents,valid_from) VALUES (?,?,?,?,?)",
@@ -213,7 +214,7 @@ class HistoryTests(unittest.TestCase):
         self.write("2026-01-02", [product(price=200)])
         self.write("2026-01-03", [product(price=300)])
         load(self.input, self.db)
-        with sqlite3.connect(self.db) as connection:
+        with closing(sqlite3.connect(self.db)) as connection, connection:
             connection.execute("UPDATE dim_product SET valid_to='2026-01-03' WHERE valid_from='2026-01-01'")
         with self.assertRaisesRegex(PipelineError, "пересечение"):
             load(self.input, self.db)
