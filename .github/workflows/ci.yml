@@ -1,0 +1,49 @@
+name: Проверки и архив исходников
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: ubuntu-latest
+            python: '3.12'
+          - os: windows-latest
+            python: '3.12'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Показать фактические версии Python и SQLite
+        run: python -c "import sys, sqlite3; print(sys.version); print(sqlite3.sqlite_version)"
+      - name: Проверить поведение конвейера
+        run: python -m unittest discover -s tests -v
+      - name: Проверить исходники и авторство коммитов
+        run: python scripts/check_public.py
+      - name: Создать синтетические данные
+        run: python -m catalog_history demo
+      - name: Запустить обработку
+        run: python -m catalog_history load
+      - name: Проверить повторный запуск
+        run: python scripts/smoke_check.py
+      - name: Упаковать публикуемые исходники
+        run: python scripts/package_release.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: source-${{ matrix.os }}-py${{ matrix.python }}
+          path: |
+            artifacts/sqlite-catalog-history-0.1.0.zip
+            artifacts/SHA256SUMS
+          if-no-files-found: error
