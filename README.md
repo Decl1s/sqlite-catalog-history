@@ -4,6 +4,8 @@
 превращаются в историю **SCD Type 2**: старая цена не теряется после обновления.
 Новый инструмент серии — SQLite, SQL и транзакции. Все примеры синтетические.
 
+[Релиз 0.1.0 и архив](https://github.com/Decl1s/sqlite-catalog-history/releases/tag/v0.1.0) · [CI](https://github.com/Decl1s/sqlite-catalog-history/actions)
+
 [Подробный конспект](NOTES.md) · [Технологии](TECHNOLOGIES.md) · [Проверки](VALIDATION.md)
 
 ## Запуск за пять минут
